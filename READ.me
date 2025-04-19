@@ -1,0 +1,17 @@
+
+//playground 
+
+
+src/
+├── app/
+│   └── playground/                 # NEW
+│       └── page.tsx               # Standalone MVP playground
+│
+├── modules/
+│   └── typingTest/
+│       ├── engine.ts              # Core logic ✅ (already built)
+│       ├── sentenceBank.ts       # Sentence source ✅ or WIP
+│       └── useTypingTest.ts      # Hook to glue logic to React
+│
+├── components/
+│   └── TypingBox.tsx             # Renders the sentence + captures input

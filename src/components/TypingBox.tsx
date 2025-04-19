@@ -1,55 +1,65 @@
-import React, { useRef, useEffect } from 'react';
+'use client';
+
+import { useState } from 'react';
 import { useTypingTest } from '@/modules/typingTest/useTypingTest';
 
-interface TypingBoxProps {
+type TypingBoxProps = {
   targetText: string;
-  onComplete?: (stats: any) => void;
-}
+};
 
-export function TypingBox({ targetText, onComplete }: TypingBoxProps) {
-  const inputRef = useRef<HTMLTextAreaElement>(null);
+export default function TypingBox({ targetText }: TypingBoxProps) {
   const { input, stats, isComplete, handleInput, reset } = useTypingTest(targetText);
-
-  useEffect(() => {
-    if (isComplete && stats && onComplete) {
-      onComplete(stats);
-    }
-  }, [isComplete, stats, onComplete]);
-
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
+  const [focused, setFocused] = useState(false);
 
   return (
-    <div className="w-full max-w-2xl mx-auto p-4 space-y-4">
-      <div className="text-xl font-mono bg-gray-100 p-4 rounded-lg whitespace-pre-wrap">
+    <div className="w-full max-w-2xl mx-auto space-y-6">
+      <div className="text-gray-700 text-xl font-medium">
         {targetText}
       </div>
-      
+
       <textarea
-        ref={inputRef}
         value={input}
         onChange={(e) => handleInput(e.target.value)}
-        className="w-full h-32 p-4 text-xl font-mono border-2 rounded-lg focus:outline-none focus:border-primary"
+        onFocus={() => setFocused(true)}
         placeholder="Start typing here..."
+        rows={4}
+        className="w-full border rounded-md p-4 font-mono text-lg tracking-wide focus:outline-none focus:ring-2 focus:ring-blue-500"
+        disabled={isComplete}
       />
 
       {stats && (
-        <div className="flex justify-between text-lg">
-          <div>WPM: {stats.wpm}</div>
-          <div>Accuracy: {stats.accuracy}%</div>
-          <div>Time: {Math.round(stats.totalTime)}s</div>
+        <div className="space-y-1 text-gray-600">
+          <p><strong>WPM:</strong> {stats.wpm}</p>
+          <p><strong>Accuracy:</strong> {stats.accuracy}%</p>
+          <p><strong>Mistakes:</strong> {Object.keys(stats.mistakes).length}</p>
         </div>
       )}
 
       {isComplete && (
         <button
           onClick={reset}
-          className="w-full py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
+          className="bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 transition"
         >
           Try Again
         </button>
       )}
     </div>
   );
-} 
+}
+
+// Section
+// What it does
+// targetText
+// Passed in from parent (e.g. a sentence from sentenceBank)
+// useTypingTest(targetText)
+// Initializes the hook
+// textarea
+// Captures user input
+// handleInput()
+// Updates input + runs engine logic
+// stats
+// Live typing stats â€” shown once available
+// isComplete
+// Locks the textarea + shows retry button
+// reset()
+// Resets everything for a new round
