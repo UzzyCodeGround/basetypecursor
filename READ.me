@@ -15,3 +15,25 @@ src/
 │
 ├── components/
 │   └── TypingBox.tsx             # Renders the sentence + captures input
+
+
+
+// onboarding
+
+src/
+├── app/
+│   ├── onboarding/                      # Onboarding route entry
+│   │   └── page.tsx                     # Renders the onboarding flow
+│
+├── components/
+│   └── QuestionCard.tsx                 # Renders one question and its options
+│
+├── modules/
+│   └── onboarding/
+│       ├── questions.ts                 # Static question + option list ✅ (already added)
+│       └── useOnboarding.ts             # Hook: manages state, progress, and answers
+│
+├── app/
+│   └── api/
+│       └── onboarding/
+│           └── submit/route.ts          # [LATER] API route to save responses
