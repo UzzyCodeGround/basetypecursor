@@ -45,7 +45,7 @@ export default function OnboardingPage() {
 
         {isComplete ? (
           <button
-            onClick={() => submit(session?.user?.id)}
+            onClick={() => submit(userEmail)}
             className="bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 text-sm"
           >
             Submit
