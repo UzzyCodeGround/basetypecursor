@@ -1,9 +1,13 @@
-'use client';
+'use client'
 
-import QuestionCard from '@/components/questionCard';
-import { useOnboarding } from '@/modules/onboarding/useOnboarding';
+import { useSession } from 'next-auth/react'
+import QuestionCard from '@/components/questionCard'
+import { useOnboarding } from '@/modules/onboarding/useOnboarding'
 
 export default function OnboardingPage() {
+  const { data: session } = useSession()
+  const userEmail = session?.user?.email
+
   const {
     currentStep,
     totalSteps,
@@ -14,9 +18,9 @@ export default function OnboardingPage() {
     goBack,
     isComplete,
     submit,
-  } = useOnboarding();
+  } = useOnboarding()
 
-  const selected = answers[currentStep];
+  const selected = answers[currentStep]
 
   return (
     <main className="flex flex-col items-center justify-center min-h-screen px-6 py-12 space-y-10">
@@ -41,7 +45,7 @@ export default function OnboardingPage() {
 
         {isComplete ? (
           <button
-            onClick={submit}
+            onClick={() => submit(userEmail)}
             className="bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 text-sm"
           >
             Submit
@@ -57,5 +61,6 @@ export default function OnboardingPage() {
         )}
       </div>
     </main>
-  );
+  )
 }
+
