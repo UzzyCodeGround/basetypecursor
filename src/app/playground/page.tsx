@@ -9,7 +9,9 @@ export default function PlaygroundPage() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-8">
       <h1 className="text-2xl font-bold mb-6">Typing Playground</h1>
-      <TypingBox targetText={sentence} />
+      <TypingBox targetText={sentence} onComplete={function (stats: any): void {
+        throw new Error('Function not implemented.');
+      } } />
     </main>
   );
 }

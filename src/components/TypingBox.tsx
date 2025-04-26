@@ -1,15 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTypingTest } from '@/modules/typingTest/useTypingTest';
 
 type TypingBoxProps = {
   targetText: string;
+  onComplete: (stats: any) => void;
 };
 
-export default function TypingBox({ targetText }: TypingBoxProps) {
+export default function TypingBox({ targetText, onComplete }: TypingBoxProps) {
   const { input, stats, isComplete, handleInput, reset } = useTypingTest(targetText);
   const [focused, setFocused] = useState(false);
+
+  // ✨ NEW: Call onComplete when test is complete
+  useEffect(() => {
+    if (isComplete && stats) {
+      onComplete(stats);
+    }
+  }, [isComplete, stats, onComplete]);
 
   return (
     <div className="w-full max-w-2xl mx-auto space-y-6">
