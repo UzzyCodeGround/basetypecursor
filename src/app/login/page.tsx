@@ -3,16 +3,25 @@
 
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState('')
+  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitted(true)
     setError('')
+
+    // Email format validation
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError('Please enter a valid email address.')
+      setSubmitted(false)
+      return
+    }
 
     const result = await signIn('email', {
       email,
@@ -21,13 +30,10 @@ export default function LoginPage() {
     })
 
     if (result?.error) {
-      setError('Something went wrong. Please try again.')
+      setError(result.error || 'Something went wrong. Please try again.')
       setSubmitted(false)
-    } else {
-      // Give time for redirect or feedback
-      setTimeout(() => {
-        setSubmitted(false)
-      }, 1000)
+    } else if (result?.url) {
+      router.push(result.url) // Manual redirect
     }
   }
 
@@ -55,3 +61,10 @@ export default function LoginPage() {
     </main>
   )
 }
+
+// Summary
+// The page is robust for a basic flow.
+// Consider adding email format validation, improved error messages, 
+// and manual redirect handling for a more polished and robust experience.
+// Backend protections (rate limiting, CAPTCHA) are also important but outside this component.
+// Would you like to see a full code example with these improvements, or move on to the next page?

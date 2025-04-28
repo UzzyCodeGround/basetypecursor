@@ -3,10 +3,12 @@
 import { useSession } from 'next-auth/react'
 import QuestionCard from '@/components/questionCard'
 import { useOnboarding } from '@/modules/onboarding/useOnboarding'
+import { useRouter } from 'next/navigation'
 
 export default function OnboardingPage() {
   const { data: session } = useSession()
   const userEmail = session?.user?.email
+  const router = useRouter()
 
   const {
     currentStep,
@@ -45,7 +47,10 @@ export default function OnboardingPage() {
 
         {isComplete ? (
           <button
-            onClick={() => submit(userEmail)}
+            onClick={async () => {
+              await submit(userEmail);
+              router.push('/playground');
+            }}
             className="bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 text-sm"
           >
             Submit
