@@ -1,5 +1,5 @@
 import React from 'react';
-import type { OnboardingQuestion, OnboardingOption } from '@/modules/onboarding/questions';
+import type { OnboardingQuestion, OnboardingOption } from '@/modules/onboarding/utils/questions';
 
 type QuestionCardProps = {
   question: OnboardingQuestion;

@@ -2,7 +2,7 @@
 
 import { useSession } from 'next-auth/react'
 import QuestionCard from '@/components/questionCard'
-import { useOnboarding } from '@/modules/onboarding/useOnboarding'
+import { useOnboarding } from '@/modules/onboarding/utils/useOnboarding'
 import { useRouter } from 'next/navigation'
 
 export default function OnboardingPage() {

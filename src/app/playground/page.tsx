@@ -2,9 +2,9 @@
 
 import { useSession } from 'next-auth/react';
 import TypingBox from '@/components/TypingBox';
-import { getRandomSentence } from '@/modules/typingTest/sentenceBank';
-import { saveTypingResult } from '@/modules/typingTest/saveResult';
-import type { TypingStats } from '@/modules/typingTest/saveResult';
+import { getRandomSentence } from '@/modules/typingTest/utils/sentenceBank';
+import { saveTypingResult } from '@/modules/typingTest/server/saveResult';
+import type { TypingStats } from '@/modules/typingTest/server/saveResult';
 import { useRouter } from 'next/navigation'; // to the results page  
 
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useTypingTest } from '@/modules/typingTest/useTypingTest';
+import { useTypingTest } from '@/modules/typingTest/utils/useTypingTest';
 
 type TypingBoxProps = {
   targetText: string;

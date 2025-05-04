@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { onboardingQuestions, OnboardingOption } from '@/modules/onboarding/questions';
+import { onboardingQuestions, OnboardingOption } from '@/modules/onboarding/utils/questions';
 
 export function useOnboarding() {
   const totalSteps = onboardingQuestions.length;
