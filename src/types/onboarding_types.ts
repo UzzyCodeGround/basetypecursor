@@ -1,4 +1,5 @@
 // Insert type — used when writing to Supabase
+// types/onboarding.ts
 export interface OnboardingResponseInsert {
   user_id: string;
   typing_goal: string;

@@ -1,8 +1,9 @@
-import NextAuth from "next-auth"
+import NextAuth, { type NextAuthOptions } from "next-auth"
+import { type Session } from "next-auth"
+import { type JWT } from "next-auth/jwt"
 import EmailProvider from "next-auth/providers/email"
 
-// Your config
-export const authOptions = {
+export const authOptions: NextAuthOptions = {
   providers: [
     EmailProvider({
       server: process.env.EMAIL_SERVER!,
@@ -10,17 +11,18 @@ export const authOptions = {
     }),
   ],
   callbacks: {
-    async session({ session, token }: { session: any; token: any }) {
+    async session({ session, token }: { session: Session; token: JWT }) {
       if (session.user) {
-        (session.user as any).id = token.sub
+        session.user.id = token.sub ?? null
       }
       return session
     },
-  }
+  },
+  pages: {
+    signIn: '/login',
+  },
+  secret: process.env.NEXTAUTH_SECRET,
 }
 
-// Create the handler once
 const handler = NextAuth(authOptions)
-
-// ✅ Export it to handle GET and POST
 export { handler as GET, handler as POST }

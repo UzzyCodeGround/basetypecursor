@@ -1,7 +1,7 @@
 // src/app/layout.tsx
 import './globals.css'
 import type { Metadata } from 'next'
-import { SessionWrapper } from '@/components/sessionwrapper'
+import { SessionWrapper } from '@/components/SessionWrapper'
 
 export const metadata: Metadata = {
   title: 'BaseType - AI-Powered Typing Coach',
