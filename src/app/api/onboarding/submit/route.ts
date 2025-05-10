@@ -1,3 +1,4 @@
+//Users/uzayrsonday/Documents/Projects/basetypecursor/src/app/api/onboarding/submit/route.ts
 import { useState } from 'react';
 import { onboardingQuestions, OnboardingOption } from '@/modules/onboarding/utils/questions';
 
