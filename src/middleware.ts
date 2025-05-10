@@ -33,8 +33,17 @@ export async function middleware(req: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession()
 
-  if (!session) {
+  // Get the current path
+  const path = req.nextUrl.pathname
+
+  // If there's no session and trying to access a protected route
+  if (!session && !path.startsWith('/login')) {
     return NextResponse.redirect(new URL('/login', req.url))
+  }
+
+  // If there's a session and on login page, redirect to onboarding
+  if (session && path === '/login') {
+    return NextResponse.redirect(new URL('/onboarding', req.url))
   }
 
   return res
@@ -48,8 +57,8 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - public folder
-     * - auth routes (login, signup, etc)
+     * - api routes
      */
-    '/((?!_next/static|_next/image|favicon.ico|public|login|signup).*)',
+    '/((?!_next/static|_next/image|favicon.ico|public|api).*)',
   ],
 }

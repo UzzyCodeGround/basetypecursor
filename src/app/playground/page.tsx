@@ -1,6 +1,6 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
+import { useSession } from '@/components/SessionWrapper';
 import TypingBox from '@/components/TypingBox';
 import { getRandomSentence } from '@/modules/typingTest/utils/sentenceBank';
 import { saveTypingResult } from '@/modules/typingTest/server/saveResult';
@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation'; // to the results page
 
 
 export default function PlaygroundPage() {
-  const { data: session } = useSession();
+  const { session } = useSession();
   const userId = session?.user?.email; // Or .id if you have a user ID
   const sentence = getRandomSentence();
   const router = useRouter();
@@ -38,8 +38,8 @@ export default function PlaygroundPage() {
 // Sees a random sentence and types it in the TypingBox.
 // When finished, the onComplete callback is
 //  triggered (currently throws an error).
-// User can click “Try Again” to reset and type the same sentence again.
-// 5. What’s Missing / Next Steps
+// User can click "Try Again" to reset and type the same sentence again.
+// 5. What's Missing / Next Steps
 // The onComplete function should be implemented to 
 // handle the stats (e.g., display a summary, save results,
 //    or move to another sentence).

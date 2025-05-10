@@ -1,12 +1,12 @@
 'use client'
 
-import { useSession } from 'next-auth/react'
+import { useSession } from '@/components/SessionWrapper'
 import QuestionCard from '@/components/questionCard'
 import { useOnboarding } from '@/modules/onboarding/utils/useOnboarding'
 import { useRouter } from 'next/navigation'
 
 export default function OnboardingPage() {
-  const { data: session } = useSession()
+  const { session } = useSession()
   const userEmail = session?.user?.email
   const router = useRouter()
 

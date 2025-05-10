@@ -1,6 +1,6 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
+import { useSession } from '@/components/SessionWrapper';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 
@@ -16,7 +16,7 @@ type TypingResult = {
 };
 
 export default function ResultsPage() {
-  const { data: session } = useSession();
+  const { session } = useSession();
   const userId = session?.user?.email;
   const [result, setResult] = useState<TypingResult | null>(null);
 

@@ -1,20 +1,132 @@
 //for login page
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
   const [error, setError] = useState('')
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    let mounted = true
+
+    // Handle the auth callback
+    const handleAuthCallback = async () => {
+      const code = searchParams.get('code')
+      if (code) {
+        try {
+          // Exchange the code for a session
+          const { error: signInError } = await supabase.auth.exchangeCodeForSession(code)
+          if (signInError) {
+            console.error('Sign in error:', signInError)
+            setError(signInError.message)
+            return
+          }
+
+          // Get the current user
+          const { data: { user }, error: userError } = await supabase.auth.getUser()
+          if (userError) {
+            console.error('Get user error:', userError)
+            setError(userError.message)
+            return
+          }
+
+          if (user && mounted) {
+            // Check if user exists in the database
+            const { data: existingUser, error: dbError } = await supabase
+              .from('users')
+              .select('id')
+              .eq('id', user.id)
+              .single()
+
+            if (dbError && dbError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+              console.error('Database error:', dbError)
+              setError('Error checking user status')
+              return
+            }
+
+            // If user doesn't exist, create them
+            if (!existingUser) {
+              const { error: insertError } = await supabase
+                .from('users')
+                .insert([
+                  {
+                    id: user.id,
+                    email: user.email,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                  },
+                ])
+
+              if (insertError) {
+                console.error('Create user error:', insertError)
+                setError('Error creating user account')
+                return
+              }
+            }
+
+            // Use router for navigation
+            router.push('/onboarding')
+          }
+        } catch (err) {
+          console.error('Auth callback error:', err)
+          setError('Failed to authenticate')
+        }
+      }
+    }
+
+    handleAuthCallback()
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session && mounted) {
+        router.push('/onboarding')
+      }
+    })
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session && mounted) {
+        router.push('/onboarding')
+      }
+    })
+
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
+  }, [router, searchParams])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    const { error } = await supabase.auth.signInWithOtp({ email })
+    setError('')
+    setSent(false)
+    
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          // Remove the emailRedirectTo option since we're using the Supabase dashboard configuration
+        },
+      })
 
-    if (error) setError(error.message)
-    else setSent(true)
+      if (error) {
+        console.error('Sign in error:', error)
+        setError(error.message)
+      } else {
+        setSent(true)
+      }
+    } catch (err) {
+      console.error('Login error:', err)
+      setError('Failed to send magic link')
+    }
   }
 
   return (
