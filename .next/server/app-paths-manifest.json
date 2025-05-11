@@ -1,3 +1,5 @@
 {
-  "/login/page": "app/login/page.js"
+  "/onboarding/page": "app/onboarding/page.js",
+  "/results/page": "app/results/page.js",
+  "/playground/page": "app/playground/page.js"
 }
