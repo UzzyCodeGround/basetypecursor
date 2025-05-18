@@ -1,32 +1,41 @@
 'use client';
 
 import { useSession } from '@/components/SessionWrapper';
-import TypingBox from '@/components/TypingBox';
+import { TypingBox } from '../../components/TypingBox';
 import { getRandomSentence } from '@/modules/typingTest/utils/sentenceBank';
-import { saveTypingResult } from '@/modules/typingTest/server/saveResult';
-import type { TypingStats } from '@/modules/typingTest/server/saveResult';
+import { saveTypingSession } from '@/modules/typingTest/server/saveResult';
+import type { TypingSession } from '@/types/db';
 import { useRouter } from 'next/navigation'; // to the results page  
-
-
+import { useEffect, useState } from 'react';
 
 export default function PlaygroundPage() {
   const { session } = useSession();
   const userId = session?.user?.email; // Or .id if you have a user ID
-  const sentence = getRandomSentence();
+  const [sentence, setSentence] = useState<string | null>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    setSentence(getRandomSentence());
+  }, []);
+
+  if (!sentence) return null; // or a loading spinner
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-8">
       <h1 className="text-2xl font-bold mb-6">Typing Playground</h1>
       <TypingBox
         targetText={sentence}
-        onComplete={async (stats: TypingStats) => {
-          await saveTypingResult({
-            ...stats,
-            user_id: userId,
-            sentence,
+        onComplete={async (stats) => {
+          await saveTypingSession({
+            user_id: userId ?? '',
+            type: 'ai_drill',
+            wpm: stats.wpm,
+            accuracy: stats.accuracy,
+            error_map: stats.mistakes,
+            duration_seconds: stats.totalTime,
+            started_at: new Date().toISOString(),
+            // Optionally add text_id if you have it
           });
-          // Optionally show a summary or`
           router.push('/results');
         }}
       />

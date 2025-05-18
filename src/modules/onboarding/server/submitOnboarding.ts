@@ -1,15 +1,15 @@
 import { supabase } from '@/lib/supabase';
-import type { OnboardingResponseInsert } from '@/types/onboarding_types';
+import type { OnboardingResponse } from '@/types/db';
 import type { OnboardingOption } from '../utils/questions';
 
 export async function submitOnboarding(userId: string, answers: (OnboardingOption | null)[]) {
-  const payload: OnboardingResponseInsert = {
+  const payload = {
     user_id: userId,
-    typing_goal: answers[0]?.text || '',
-    experience_level: answers[1]?.text || '',
-    platform_use_case: answers[2]?.text || '',
-    game_motivation: answers[3]?.text || '',
-    coach_learning_style: answers[4]?.text || '',
+    goal: answers[0]?.text || '',
+    typing_level: answers[1]?.text || '',
+    frustration: answers[2]?.text || '',
+    progress_metric: answers[3]?.text || '',
+    coach_style: answers[4]?.text || '',
   };
 
   const { error } = await supabase.from('onboarding_response').insert([payload]);

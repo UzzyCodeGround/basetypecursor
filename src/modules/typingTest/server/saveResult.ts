@@ -1,19 +1,11 @@
 import { supabase } from '@/lib/supabase';
+import type { TypingSession } from '@/types/db';
 
-export interface TypingStats {
-  wpm: number;
-  accuracy: number;
-  mistakes: { [key: string]: number };
-  totalTime: number;
-  totalCharacters: number;
-  correctCharacters: number;
-}
-
-export async function saveTypingResult(result: TypingStats & { user_id?: string | null; sentence: string }) {
-  const { error } = await supabase.from('typing_results').insert([result]);
+export async function saveTypingSession(result: Omit<TypingSession, 'id' | 'started_at' | 'completed_at'> & { started_at: string; completed_at?: string }) {
+  const { error } = await supabase.from('typing_session').insert([result]);
   if (error) {
-    console.error('Error saving typing result:', error.message);
+    console.error('Error saving typing session:', error.message);
   } else {
-    console.log('✅ Typing result saved to Supabase');
+    console.log('✅ Typing session saved to Supabase');
   }
 }

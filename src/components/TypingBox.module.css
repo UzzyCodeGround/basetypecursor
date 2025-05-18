@@ -1,0 +1,68 @@
+.typingBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 2rem;
+}
+
+.targetText {
+  font-family: monospace;
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+.correct {
+  color: #222;
+  background: #e0ffe0;
+  border-bottom: 2px solid #222;
+  padding: 0 2px;
+  border-radius: 3px;
+}
+
+.incorrect {
+  color: #fff;
+  background: #ffb3b3;
+  border-bottom: 2px solid #c00;
+  padding: 0 2px;
+  border-radius: 3px;
+}
+
+.current {
+  border-bottom: 2px solid #0070f3;
+  background: #e6f0ff;
+  padding: 0 2px;
+  border-radius: 3px;
+}
+
+.typingInput {
+  width: 100%;
+  min-width: 320px;
+  max-width: 480px;
+  font-size: 1.2rem;
+  padding: 0.5rem;
+  margin-top: 0.5rem;
+  border: 2px solid #0070f3;
+  border-radius: 6px;
+  outline: none;
+  font-family: monospace;
+}
+
+.ghostInput {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 1px;
+  height: 1px;
+  left: -9999px;
+  top: auto;
+  z-index: -1;
+}
+
+.stats {
+  margin-top: 1rem;
+  font-size: 1.1rem;
+  text-align: center;
+} 

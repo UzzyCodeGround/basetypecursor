@@ -1,73 +1,77 @@
-'use client';
+import React, { useRef, useEffect } from 'react';
+import { useTypingSession1 } from '@/modules/typingTest/hooks/useTypingSession1';
+import styles from './TypingBox.module.css';
 
-import { useState, useEffect } from 'react';
-import { useTypingTest } from '@/modules/typingTest/utils/useTypingTest';
-
-type TypingBoxProps = {
+interface TypingBoxProps {
   targetText: string;
-  onComplete: (stats: any) => void;
-};
+  onComplete: (stats: any) => Promise<void>;
+}
 
-export default function TypingBox({ targetText, onComplete }: TypingBoxProps) {
-  const { input, stats, isComplete, handleInput, reset } = useTypingTest(targetText);
-  const [focused, setFocused] = useState(false);
+export const TypingBox: React.FC<TypingBoxProps> = ({ targetText, onComplete }) => {
+  const {
+    input,
+    handleInputChange,
+    isComplete,
+    stats,
+    typedHistory,
+    reset
+  } = useTypingSession1(targetText);
 
-  // ✨ NEW: Call onComplete when test is complete
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Focus the hidden textarea on mount for ghost typing
   useEffect(() => {
+    textareaRef.current?.focus();
+  }, []);
+
+  // Call onComplete when test is finished
+  React.useEffect(() => {
     if (isComplete && stats) {
       onComplete(stats);
     }
   }, [isComplete, stats, onComplete]);
 
   return (
-    <div className="w-full max-w-2xl mx-auto space-y-6">
-      <div className="text-gray-700 text-xl font-medium">
-        {targetText}
+    <div className={styles.typingBox}>
+      <div className={styles.targetText} onClick={() => textareaRef.current?.focus()} tabIndex={0}>
+        {targetText.split('').map((char, index) => {
+          const isCurrentChar = index === input.length;
+          const isTyped = index < input.length;
+          const isCorrect = isTyped && input[index] === char;
+
+          return (
+            <span
+              key={index}
+              className={[
+                isCurrentChar ? styles.current : '',
+                isTyped ? (isCorrect ? styles.correct : styles.incorrect) : ''
+              ].join(' ').trim()}
+            >
+              {char}
+            </span>
+          );
+        })}
       </div>
 
+      {/* Visually hidden textarea for ghost typing */}
       <textarea
+        ref={textareaRef}
         value={input}
-        onChange={(e) => handleInput(e.target.value)}
-        onFocus={() => setFocused(true)}
-        placeholder="Start typing here..."
-        rows={4}
-        className="w-full border rounded-md p-4 font-mono text-lg tracking-wide focus:outline-none focus:ring-2 focus:ring-blue-500"
+        onChange={handleInputChange}
         disabled={isComplete}
+        placeholder="Start typing..."
+        className={styles.ghostInput}
+        aria-label="Typing input"
+        autoFocus
       />
 
-      {stats && (
-        <div className="space-y-1 text-gray-600">
-          <p><strong>WPM:</strong> {stats.wpm}</p>
-          <p><strong>Accuracy:</strong> {stats.accuracy}%</p>
-          <p><strong>Mistakes:</strong> {Object.keys(stats.mistakes).length}</p>
+      {isComplete && stats && (
+        <div className={styles.stats}>
+          <p>WPM: {stats.wpm}</p>
+          <p>Accuracy: {stats.accuracy}%</p>
+          <button onClick={reset}>Try Again</button>
         </div>
-      )}
-
-      {isComplete && (
-        <button
-          onClick={reset}
-          className="bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 transition"
-        >
-          Try Again
-        </button>
       )}
     </div>
   );
-}
-
-// Section
-// What it does
-// targetText
-// Passed in from parent (e.g. a sentence from sentenceBank)
-// useTypingTest(targetText)
-// Initializes the hook
-// textarea
-// Captures user input
-// handleInput()
-// Updates input + runs engine logic
-// stats
-// Live typing stats â€” shown once available
-// isComplete
-// Locks the textarea + shows retry button
-// reset()
-// Resets everything for a new round
+}; 
