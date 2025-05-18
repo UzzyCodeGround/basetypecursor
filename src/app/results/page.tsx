@@ -1,50 +1,40 @@
 'use client';
 
-import { useSession } from '@/components/SessionWrapper';
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
 import { KeyboardHeatmap } from '@/components/KeyboardHeatmap';
 import type { TypingSession } from '@/types/db';
 import Link from 'next/link';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { getLatestSession } from '@/modules/typingTest/server/getLatestSession';
 
-// Mock data for charts
-const mockSessions = [
-  { session: 1, accuracy: 92, wpm: 45 },
-  { session: 2, accuracy: 94, wpm: 48 },
-  { session: 3, accuracy: 91, wpm: 50 },
-  { session: 4, accuracy: 96, wpm: 52 },
-  { session: 5, accuracy: 95, wpm: 54 },
-];
-
-function AccuracyOverTimeChart() {
+function SinglePointWPMChart({ data }: { data: { started_at: string; wpm: number }[] }) {
   return (
     <div className="w-full h-64 flex flex-col items-center">
-      <div className="text-xs text-gray-500 mb-2">Accuracy Over Time</div>
+      <div className="text-xs text-gray-500 mb-2">WPM</div>
       <ResponsiveContainer width="100%" height="90%">
-        <LineChart data={mockSessions} margin={{ left: 8, right: 8, top: 8, bottom: 8 }}>
+        <LineChart data={data} margin={{ left: 8, right: 8, top: 8, bottom: 8 }}>
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="session" tick={{ fontSize: 12 }} />
-          <YAxis domain={[80, 100]} tick={{ fontSize: 12 }} />
+          <XAxis dataKey="started_at" tick={{ fontSize: 12 }} />
+          <YAxis domain={[0, Math.max(60, data[0]?.wpm ? data[0].wpm + 10 : 60)]} tick={{ fontSize: 12 }} />
           <Tooltip />
-          <Line type="monotone" dataKey="accuracy" stroke="#2563eb" strokeWidth={2} dot={{ r: 4 }} />
+          <Line type="monotone" dataKey="wpm" stroke="#2563eb" strokeWidth={2} dot={{ r: 6 }} />
         </LineChart>
       </ResponsiveContainer>
     </div>
   );
 }
 
-function WPMOverTimeChart() {
+function SinglePointAccuracyChart({ data }: { data: { started_at: string; accuracy: number }[] }) {
   return (
     <div className="w-full h-64 flex flex-col items-center">
-      <div className="text-xs text-gray-500 mb-2">Words Per Minute Over Time</div>
+      <div className="text-xs text-gray-500 mb-2">Accuracy</div>
       <ResponsiveContainer width="100%" height="90%">
-        <LineChart data={mockSessions} margin={{ left: 8, right: 8, top: 8, bottom: 8 }}>
+        <LineChart data={data} margin={{ left: 8, right: 8, top: 8, bottom: 8 }}>
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="session" tick={{ fontSize: 12 }} />
-          <YAxis domain={[40, 60]} tick={{ fontSize: 12 }} />
+          <XAxis dataKey="started_at" tick={{ fontSize: 12 }} />
+          <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
           <Tooltip />
-          <Line type="monotone" dataKey="wpm" stroke="#10b981" strokeWidth={2} dot={{ r: 4 }} />
+          <Line type="monotone" dataKey="accuracy" stroke="#10b981" strokeWidth={2} dot={{ r: 6 }} />
         </LineChart>
       </ResponsiveContainer>
     </div>
@@ -52,30 +42,31 @@ function WPMOverTimeChart() {
 }
 
 export default function ResultsPage() {
-  const { session } = useSession();
-  const userId = session?.user?.email;
-  const [result, setResult] = useState<TypingSession | null>(null);
+  const [session, setSession] = useState<TypingSession | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!userId) return;
-    // Fetch the latest result for this user
-    supabase
-      .from('typing_session')
-      .select('*')
-      .eq('user_id', userId)
-      .order('completed_at', { ascending: false })
-      .limit(1)
-      .then(({ data }) => {
-        if (data && data.length > 0) setResult(data[0]);
-      });
-  }, [userId]);
+    async function fetchSession() {
+      setLoading(true);
+      const latest = await getLatestSession();
+      setSession(latest);
+      setLoading(false);
+    }
+    fetchSession();
+  }, []);
 
-  // Use mock error_map for now
-  const errorMap = result?.error_map || { e: 3, r: 2, t: 1 };
-  // Convert errorMap to typedHistory array for KeyboardHeatmap
-  const typedHistory = Object.entries(errorMap).flatMap(([key, count]) =>
-    Array(count).fill({ key, correct: false })
-  );
+  // Convert error_map to typedHistory array for KeyboardHeatmap
+  const typedHistory = session?.error_map
+    ? Object.entries(session.error_map).flatMap(([key, count]) => Array(count).fill({ key, correct: false }))
+    : [];
+
+  // Prepare single-point data for graphs
+  const wpmData = session
+    ? [{ started_at: new Date(session.started_at).toLocaleDateString(), wpm: session.wpm ?? 0 }]
+    : [];
+  const accuracyData = session
+    ? [{ started_at: new Date(session.started_at).toLocaleDateString(), accuracy: session.accuracy ?? 0 }]
+    : [];
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-8 bg-white relative">
@@ -89,13 +80,33 @@ export default function ResultsPage() {
       </div>
       <h1 className="text-2xl font-bold mb-6 text-gray-900">Your Typing Test Result</h1>
       <div className="flex flex-col md:flex-row items-center justify-center w-full max-w-5xl gap-8">
-        {/* Left: Accuracy graph */}
+        {/* Left: WPM graph */}
         <div className="w-full md:w-1/4 flex justify-center">
-          <AccuracyOverTimeChart />
+          {loading || !session ? (
+            <div className="text-gray-400 text-lg py-12">No data</div>
+          ) : (
+            <SinglePointWPMChart data={wpmData} />
+          )}
         </div>
-        {/* Center: KeyboardHeatmap */}
+        {/* Center: KeyboardHeatmap and session info */}
         <div className="w-full md:w-2/4 flex flex-col items-center">
-          <KeyboardHeatmap typedHistory={typedHistory} />
+          {loading ? (
+            <div className="text-gray-400 text-lg py-12">Loading...</div>
+          ) : session ? (
+            <>
+              <KeyboardHeatmap typedHistory={typedHistory} />
+              <div className="mt-6 flex flex-col items-center space-y-2">
+                <div className="text-lg font-semibold text-gray-800">{session.type === 'initial_test' ? 'Initial Test' : 'AI Drill'}</div>
+                <div className="flex gap-8 text-base text-gray-700">
+                  <span><span className="font-bold">WPM:</span> {session.wpm}</span>
+                  <span><span className="font-bold">Accuracy:</span> {session.accuracy}%</span>
+                  <span><span className="font-bold">Duration:</span> {Math.round((session.duration_seconds || 0) / 60 * 100) / 100} min</span>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="text-gray-400 text-lg py-12">No session found yet.</div>
+          )}
           <div className="mt-8 flex justify-center">
             <Link href="/playground">
               <button className="bg-black text-white px-8 py-3 rounded-md hover:bg-gray-800 text-base font-medium shadow">
@@ -104,9 +115,13 @@ export default function ResultsPage() {
             </Link>
           </div>
         </div>
-        {/* Right: WPM graph */}
+        {/* Right: Accuracy graph */}
         <div className="w-full md:w-1/4 flex justify-center">
-          <WPMOverTimeChart />
+          {loading || !session ? (
+            <div className="text-gray-400 text-lg py-12">No data</div>
+          ) : (
+            <SinglePointAccuracyChart data={accuracyData} />
+          )}
         </div>
       </div>
     </main>
