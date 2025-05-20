@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { onboardingQuestions, OnboardingOption } from './questions'
-import { submitOnboarding } from '../server/submitOnboarding'
 
 export function useOnboarding() {
   const totalSteps = onboardingQuestions.length
@@ -37,7 +36,22 @@ export function useOnboarding() {
       console.error('No user ID — cannot submit onboarding')
       return
     }
-    await submitOnboarding(userId, answers)
+    try {
+      const res = await fetch('/api/onboarding/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, answers }),
+      })
+
+      if (!res.ok) {
+        const { error } = await res.json().catch(() => ({}))
+        throw new Error(error ?? res.statusText)
+      }
+
+      console.log('✅ Onboarding submitted')
+    } catch (err) {
+      console.error('❌ Error submitting onboarding:', err)
+    }
   }
 
   return {

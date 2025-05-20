@@ -1,51 +1,36 @@
 //Users/uzayrsonday/Documents/Projects/basetypecursor/src/app/api/onboarding/submit/route.ts
-import { useState } from 'react';
-import { onboardingQuestions, OnboardingOption } from '@/modules/onboarding/utils/questions';
+import { NextResponse } from 'next/server'
+import { supabase } from '@/lib/supabaseServer'
+import type { OnboardingOption } from '@/modules/onboarding/utils/questions'
 
-export function useOnboarding() {
-  const totalSteps = onboardingQuestions.length;
-
-  const [currentStep, setCurrentStep] = useState(0);
-  const [answers, setAnswers] = useState<(OnboardingOption | null)[]>(
-    Array(totalSteps).fill(null)
-  );
-
-  const currentQuestion = onboardingQuestions[currentStep];
-
-  const setAnswer = (step: number, option: OnboardingOption) => {
-    const updatedAnswers = [...answers];
-    updatedAnswers[step] = option;
-    setAnswers(updatedAnswers);
-  };
-
-  const goNext = () => {
-    if (currentStep < totalSteps - 1) {
-      setCurrentStep((prev) => prev + 1);
+export async function POST(request: Request) {
+  try {
+    const { userId, answers } = (await request.json()) as {
+      userId: string
+      answers: (OnboardingOption | null)[]
     }
-  };
 
-  const goBack = () => {
-    if (currentStep > 0) {
-      setCurrentStep((prev) => prev - 1);
+    if (!userId || !Array.isArray(answers)) {
+      return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
     }
-  };
 
-  const isComplete = currentStep === totalSteps - 1;
+    const payload = {
+      user_id: userId,
+      goal: answers[0]?.text || '',
+      typing_level: answers[1]?.text || '',
+      frustration: answers[2]?.text || '',
+      progress_metric: answers[3]?.text || '',
+      coach_style: answers[4]?.text || '',
+    }
 
-  const submit = () => {
-    console.log('Submitting answers:', answers);
-    // Later: call API route to store in Supabase
-  };
+    const { error } = await supabase.from('onboarding_response').insert([payload])
 
-  return {
-    currentStep,
-    totalSteps,
-    currentQuestion,
-    answers,
-    setAnswer,
-    goNext,
-    goBack,
-    isComplete,
-    submit,
-  };
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    return NextResponse.json({ ok: true })
+  } catch {
+    return NextResponse.json({ error: 'Unexpected server error' }, { status: 500 })
+  }
 }

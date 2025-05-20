@@ -5,7 +5,6 @@ import { KeyboardHeatmap } from '@/components/KeyboardHeatmap';
 import type { TypingSession } from '@/types/db';
 import Link from 'next/link';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { getLatestSession } from '@/modules/typingTest/server/getLatestSession';
 
 function SinglePointWPMChart({ data }: { data: { started_at: string; wpm: number }[] }) {
   return (
@@ -48,8 +47,33 @@ export default function ResultsPage() {
   useEffect(() => {
     async function fetchSession() {
       setLoading(true);
-      const latest = await getLatestSession();
-      setSession(latest);
+      try {
+        const res = await fetch('/api/typing/latest');
+        if (res.ok) {
+          const { session: latest } = await res.json();
+          if (latest) {
+            setSession(latest);
+          } else {
+            // Fallback to localStorage if no session found in DB
+            const raw = localStorage.getItem('latest_stats');
+            if (raw) {
+              const tmp = JSON.parse(raw);
+              setSession({
+                id: 'local',
+                user_id: 'local',
+                type: 'ai_drill',
+                wpm: tmp.wpm,
+                accuracy: tmp.accuracy,
+                error_map: tmp.mistakes,
+                duration_seconds: tmp.totalTime,
+                started_at: new Date().toISOString(),
+              } as any);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching latest session:', err);
+      }
       setLoading(false);
     }
     fetchSession();

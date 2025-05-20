@@ -3,14 +3,14 @@
 import { useSession } from '@/components/SessionWrapper';
 import { TypingBox } from '../../components/TypingBox';
 import { getRandomSentence } from '@/modules/typingTest/utils/sentenceBank';
-import { saveTypingSession } from '@/modules/typingTest/server/saveResult';
-import type { TypingSession } from '@/types/db';
+import { DEV_USER_ID } from '@/lib/constants';
 import { useRouter } from 'next/navigation'; // to the results page  
 import { useEffect, useState } from 'react';
+import type { TypingStats } from '@/modules/typingTest/utils/engine';
 
 export default function PlaygroundPage() {
   const { session } = useSession();
-  const userId = session?.user?.email; // Or .id if you have a user ID
+  const userId = DEV_USER_ID;
   const [sentence, setSentence] = useState<string | null>(null);
   const router = useRouter();
 
@@ -25,18 +25,42 @@ export default function PlaygroundPage() {
       <h1 className="text-2xl font-bold mb-6">Typing Playground</h1>
       <TypingBox
         targetText={sentence}
-        onComplete={async (stats) => {
-          await saveTypingSession({
-            user_id: userId ?? '',
-            type: 'ai_drill',
-            wpm: stats.wpm,
-            accuracy: stats.accuracy,
-            error_map: stats.mistakes,
-            duration_seconds: stats.totalTime,
-            started_at: new Date().toISOString(),
-            // Optionally add text_id if you have it
-          });
+        onComplete={async (stats: TypingStats) => {
+          console.log('🔔 onComplete fired with stats', stats);
+
+          // Persist latest stats in localStorage so /results can fall back to them
+          try {
+            localStorage.setItem('latest_stats', JSON.stringify(stats));
+          } catch { }
+
+          // Navigate immediately to results page for a smooth UX
           router.push('/results');
+
+          // Attempt to save in the background (failure shouldn't block navigation)
+          try {
+            const res = await fetch('/api/typing/save', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                user_id: userId,
+                type: 'ai_drill',
+                wpm: Math.round(stats.wpm),
+                accuracy: Math.round(stats.accuracy),
+                error_map: stats.mistakes,
+                duration_seconds: Math.round(stats.totalTime),
+                started_at: new Date().toISOString(),
+              })
+            });
+            if (res.ok) {
+              const data = await res.json();
+              console.log('Session saved with id:', data.id);
+            } else {
+              const err = await res.json().catch(() => ({}));
+              console.error('Failed to save typing session', err);
+            }
+          } catch (err) {
+            console.error('Error during save request:', err);
+          }
         }}
       />
     </main>

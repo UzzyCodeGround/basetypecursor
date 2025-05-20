@@ -1,6 +1,9 @@
 {
   "/page": "app/page.js",
   "/playground/page": "app/playground/page.js",
+  "/api/typing/save/route": "app/api/typing/save/route.js",
   "/results/page": "app/results/page.js",
-  "/profile/page": "app/profile/page.js"
+  "/api/typing/latest/route": "app/api/typing/latest/route.js",
+  "/profile/page": "app/profile/page.js",
+  "/api/typing/history/route": "app/api/typing/history/route.js"
 }

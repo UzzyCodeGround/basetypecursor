@@ -1,10 +1,11 @@
 import React, { useRef, useEffect } from 'react';
 import { useTypingSession1 } from '@/modules/typingTest/hooks/useTypingSession1';
 import styles from './TypingBox.module.css';
+import type { TypingStats } from '@/modules/typingTest/utils/engine';
 
 interface TypingBoxProps {
   targetText: string;
-  onComplete: (stats: any) => Promise<void>;
+  onComplete: (stats: TypingStats) => Promise<void>;
 }
 
 export const TypingBox: React.FC<TypingBoxProps> = ({ targetText, onComplete }) => {

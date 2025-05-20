@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseServer';
 import type { OnboardingResponse } from '@/types/db';
 import type { OnboardingOption } from '../utils/questions';
 

@@ -1,5 +1,8 @@
 'use client'
 
+console.log('SUPABASE_URL', process.env.NEXT_PUBLIC_SUPABASE_URL);
+console.log('ANON_KEY', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+
 import { useSession } from '@/components/SessionWrapper'
 import QuestionCard from '@/components/questionCard'
 import { useOnboarding } from '@/modules/onboarding/utils/useOnboarding'
@@ -7,9 +10,18 @@ import { useRouter } from 'next/navigation'
 
 export default function OnboardingPage() {
   const { session } = useSession()
-  const userEmail = session?.user?.email
   const router = useRouter()
 
+  // Show loading state while SessionWrapper is still determining auth status
+  if (session === undefined) {
+    return (
+      <main className="flex flex-col items-center justify-center min-h-screen">
+        <div className="text-gray-500">Loading...</div>
+      </main>
+    )
+  }
+
+  const userEmail = session?.user?.email
   const {
     currentStep,
     totalSteps,

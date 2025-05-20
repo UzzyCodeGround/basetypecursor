@@ -5,35 +5,6 @@ import { KeyboardHeatmap } from '@/components/KeyboardHeatmap';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid } from 'recharts';
 import type { TypingSession } from '@/types/db';
 import { FaRobot, FaPlayCircle } from 'react-icons/fa';
-import { getUserTypingSessions } from '@/modules/typingTest/server/getUserTypingSessions';
-import { supabase } from '@/lib/supabase';
-
-const HARDCODED_USER_ID = '91f8a389-1256-4b3b-8430-1177e4cfcd56';
-
-/**
- * Fetch the most recent typing session for the hardcoded user.
- * Only includes sessions where wpm and accuracy are not null.
- * Returns TypingSession or null if none found.
- */
-export async function getLatestSession(): Promise<TypingSession | null> {
-  const { data, error } = await supabase
-    .from('typing_session')
-    .select('*')
-    .eq('user_id', HARDCODED_USER_ID)
-    .not('wpm', 'is', null)
-    .not('accuracy', 'is', null)
-    .order('started_at', { ascending: false })
-    .limit(1);
-
-  if (error) {
-    console.error('Error fetching latest session:', error.message);
-    return null;
-  }
-  if (!data || data.length === 0) {
-    return null;
-  }
-  return data[0] as TypingSession;
-}
 
 export default function ProfilePage() {
   const [sessions, setSessions] = useState<TypingSession[] | null>(null);
@@ -42,8 +13,17 @@ export default function ProfilePage() {
   useEffect(() => {
     async function fetchSessions() {
       setLoading(true);
-      const data = await getUserTypingSessions(HARDCODED_USER_ID);
-      setSessions(data);
+      try {
+        const res = await fetch('/api/typing/history');
+        if (!res.ok) {
+          console.error('Failed to fetch typing history');
+          return;
+        }
+        const { sessions: data } = await res.json();
+        setSessions(data);
+      } catch (err) {
+        console.error('Error fetching typing history:', err);
+      }
       setLoading(false);
     }
     fetchSessions();
@@ -57,7 +37,27 @@ export default function ProfilePage() {
     );
   }
 
-  if (!sessions || sessions.length === 0) {
+  let displaySessions = sessions;
+
+  if (!displaySessions || displaySessions.length === 0) {
+    // Fallback to localStorage single session
+    const raw = typeof window !== 'undefined' ? localStorage.getItem('latest_stats') : null;
+    if (raw) {
+      const tmp = JSON.parse(raw);
+      displaySessions = [{
+        id: 'local',
+        user_id: 'local',
+        type: 'ai_drill',
+        wpm: tmp.wpm,
+        accuracy: tmp.accuracy,
+        error_map: tmp.mistakes,
+        duration_seconds: tmp.totalTime,
+        started_at: new Date().toISOString(),
+      } as any];
+    }
+  }
+
+  if (!displaySessions || displaySessions.length === 0) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-white">
         <div className="text-gray-400 text-lg">No typing sessions found.</div>
@@ -66,14 +66,14 @@ export default function ProfilePage() {
   }
 
   // Summary calculations
-  const avgWPM = Math.round(sessions.reduce((sum, s) => sum + (s.wpm || 0), 0) / sessions.length);
-  const avgAccuracy = Math.round(sessions.reduce((sum, s) => sum + (s.accuracy || 0), 0) / sessions.length);
-  const totalTime = Math.round(sessions.reduce((sum, s) => sum + (s.duration_seconds || 0), 0) / 60); // minutes
-  const sessionCount = sessions.length;
+  const avgWPM = Math.round(displaySessions.reduce((sum, s) => sum + (s.wpm || 0), 0) / displaySessions.length);
+  const avgAccuracy = Math.round(displaySessions.reduce((sum, s) => sum + (s.accuracy || 0), 0) / displaySessions.length);
+  const totalTime = Math.round(displaySessions.reduce((sum, s) => sum + (s.duration_seconds || 0), 0) / 60); // minutes
+  const sessionCount = displaySessions.length;
 
   // Cumulative error map
   const cumulativeErrorMap: { [key: string]: number } = {};
-  sessions.forEach((s) => {
+  displaySessions.forEach((s) => {
     if (s.error_map) {
       Object.entries(s.error_map).forEach(([k, v]) => {
         cumulativeErrorMap[k] = (cumulativeErrorMap[k] || 0) + v;
@@ -85,7 +85,7 @@ export default function ProfilePage() {
   );
 
   // Progress graph data
-  const progressData = sessions.map((s) => ({
+  const progressData = displaySessions.map((s) => ({
     started_at: new Date(s.started_at).toLocaleDateString(),
     wpm: s.wpm,
     accuracy: s.accuracy,
@@ -141,7 +141,7 @@ export default function ProfilePage() {
       <section className="w-full max-w-4xl">
         <div className="text-xs text-gray-500 mb-2">Session History</div>
         <div className="bg-gray-50 rounded-lg shadow divide-y divide-gray-200 max-h-72 overflow-y-auto">
-          {sessions.map((s) => (
+          {displaySessions.map((s) => (
             <div key={s.id} className="flex items-center justify-between px-4 py-3">
               <div className="flex items-center gap-2">
                 {s.type === 'initial_test' ? (

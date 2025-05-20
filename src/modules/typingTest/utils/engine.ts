@@ -17,7 +17,7 @@ export class TypingTestEngine {
   private isComplete = false;
   private typedHistory: { key: string; correct: boolean }[] = [];
 
-  constructor(private readonly targetText: string) {}
+  constructor(private readonly targetText: string) { }
 
   start(): void {
     this.startTime = Date.now();
@@ -52,7 +52,7 @@ export class TypingTestEngine {
       }
     }
 
-    this.isComplete = input.length === this.targetText.length;
+    this.isComplete = input.length >= this.targetText.length;
     return this.isComplete;
   }
 
@@ -67,8 +67,8 @@ export class TypingTestEngine {
     const accuracy = (this.correctCharacters / this.totalCharacters) * 100;
 
     return {
-      wpm: Math.round(wpm * 100) / 100,
-      accuracy: Math.round(accuracy * 100) / 100,
+      wpm: Math.round(wpm),
+      accuracy: Math.round(accuracy),
       mistakes: this.mistakes,
       totalTime,
       totalCharacters: this.totalCharacters,
