@@ -12,19 +12,70 @@ export default function ProfilePage() {
 
   useEffect(() => {
     async function fetchSessions() {
+      console.log('[profile] fetchSessions start');
       setLoading(true);
       try {
         const res = await fetch('/api/typing/history');
+        console.log('[profile] API response status:', res.status);
         if (!res.ok) {
-          console.error('Failed to fetch typing history');
-          return;
+          console.error('[profile] Failed to fetch typing history');
+          // Don't return early, continue to fallback
+        } else {
+          const { sessions: data } = await res.json();
+          console.log('[profile] API sessions:', data);
+          setSessions(data);
         }
-        const { sessions: data } = await res.json();
-        setSessions(data);
       } catch (err) {
-        console.error('Error fetching typing history:', err);
+        console.error('[profile] Error fetching typing history:', err);
+        // Don't return early, continue to fallback
       }
-      setLoading(false);
+      // Fallback logic
+      let displaySessions = null;
+      try {
+        const arrRaw = typeof window !== 'undefined' ? localStorage.getItem('session_history') : null;
+        console.log('[profile] localStorage.session_history:', arrRaw);
+        if (arrRaw) {
+          const arr = JSON.parse(arrRaw);
+          if (Array.isArray(arr) && arr.length > 0) {
+            displaySessions = arr.map((tmp, i) => ({
+              id: 'local-' + i,
+              user_id: 'local',
+              type: 'ai_drill' as const,
+              wpm: tmp.wpm,
+              accuracy: tmp.accuracy,
+              error_map: tmp.mistakes || tmp.error_map || {},
+              duration_seconds: tmp.totalTime,
+              started_at: new Date().toISOString(),
+            }));
+            console.log('[profile] Fallback sessions from session_history:', displaySessions);
+            setSessions(displaySessions);
+          }
+        }
+        if (!displaySessions) {
+          const raw = typeof window !== 'undefined' ? localStorage.getItem('latest_stats') : null;
+          console.log('[profile] localStorage.latest_stats:', raw);
+          if (raw) {
+            const tmp = JSON.parse(raw);
+            displaySessions = [{
+              id: 'local',
+              user_id: 'local',
+              type: 'ai_drill' as const,
+              wpm: tmp.wpm,
+              accuracy: tmp.accuracy,
+              error_map: tmp.mistakes || tmp.error_map || {},
+              duration_seconds: tmp.totalTime,
+              started_at: new Date().toISOString(),
+            }];
+            console.log('[profile] Fallback session from latest_stats:', displaySessions);
+            setSessions(displaySessions);
+          }
+        }
+      } catch (err) {
+        console.error('[profile] Error in fallback logic:', err);
+      } finally {
+        setLoading(false);
+        console.log('[profile] setLoading(false) called');
+      }
     }
     fetchSessions();
   }, []);
@@ -38,24 +89,6 @@ export default function ProfilePage() {
   }
 
   let displaySessions = sessions;
-
-  if (!displaySessions || displaySessions.length === 0) {
-    // Fallback to localStorage single session
-    const raw = typeof window !== 'undefined' ? localStorage.getItem('latest_stats') : null;
-    if (raw) {
-      const tmp = JSON.parse(raw);
-      displaySessions = [{
-        id: 'local',
-        user_id: 'local',
-        type: 'ai_drill',
-        wpm: tmp.wpm,
-        accuracy: tmp.accuracy,
-        error_map: tmp.mistakes,
-        duration_seconds: tmp.totalTime,
-        started_at: new Date().toISOString(),
-      } as any];
-    }
-  }
 
   if (!displaySessions || displaySessions.length === 0) {
     return (

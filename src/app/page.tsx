@@ -13,7 +13,7 @@ export default function HomePage() {
         Your AI typing coach is ready to help you type faster and more accurately.
       </p>
       <button
-        onClick={() => router.push('/login')}
+        onClick={() => router.push('/onboarding')}
         className="bg-black text-white py-2 px-4 rounded-md hover:bg-gray-800"
       >
         Get Started

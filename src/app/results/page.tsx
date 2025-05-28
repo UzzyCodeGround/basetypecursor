@@ -49,26 +49,52 @@ export default function ResultsPage() {
       setLoading(true);
       try {
         const res = await fetch('/api/typing/latest');
+        console.log('[results] API response status:', res.status);
         if (res.ok) {
           const { session: latest } = await res.json();
+          console.log('[results] API session:', latest);
           if (latest) {
             setSession(latest);
           } else {
             // Fallback to localStorage if no session found in DB
             const raw = localStorage.getItem('latest_stats');
+            console.log('[results] localStorage.latest_stats:', raw);
             if (raw) {
               const tmp = JSON.parse(raw);
+              console.log('[results] Parsed fallback stats:', tmp);
               setSession({
                 id: 'local',
                 user_id: 'local',
                 type: 'ai_drill',
-                wpm: tmp.wpm,
-                accuracy: tmp.accuracy,
-                error_map: tmp.mistakes,
-                duration_seconds: tmp.totalTime,
+                wpm: tmp.wpm ?? 0,
+                accuracy: tmp.accuracy ?? 0,
+                error_map: tmp.error_map || tmp.mistakes || {},
+                duration_seconds: tmp.duration_seconds ?? tmp.totalTime ?? 0,
                 started_at: new Date().toISOString(),
               } as any);
+            } else {
+              console.log('[results] No fallback stats found in localStorage');
             }
+          }
+        } else {
+          // API failed, fallback to localStorage
+          const raw = localStorage.getItem('latest_stats');
+          console.log('[results] API failed, localStorage.latest_stats:', raw);
+          if (raw) {
+            const tmp = JSON.parse(raw);
+            console.log('[results] Parsed fallback stats:', tmp);
+            setSession({
+              id: 'local',
+              user_id: 'local',
+              type: 'ai_drill',
+              wpm: tmp.wpm ?? 0,
+              accuracy: tmp.accuracy ?? 0,
+              error_map: tmp.error_map || tmp.mistakes || {},
+              duration_seconds: tmp.duration_seconds ?? tmp.totalTime ?? 0,
+              started_at: new Date().toISOString(),
+            } as any);
+          } else {
+            console.log('[results] No fallback stats found in localStorage');
           }
         }
       } catch (err) {
@@ -91,6 +117,9 @@ export default function ResultsPage() {
   const accuracyData = session
     ? [{ started_at: new Date(session.started_at).toLocaleDateString(), accuracy: session.accuracy ?? 0 }]
     : [];
+
+  // Final debug log before rendering
+  console.log('[results] Final session object:', session);
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-8 bg-white relative">

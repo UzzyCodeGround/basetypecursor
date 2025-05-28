@@ -31,6 +31,14 @@ export default function PlaygroundPage() {
           // Persist latest stats in localStorage so /results can fall back to them
           try {
             localStorage.setItem('latest_stats', JSON.stringify(stats));
+            // Also append to session_history array
+            const historyRaw = localStorage.getItem('session_history');
+            let history = [];
+            if (historyRaw) {
+              try { history = JSON.parse(historyRaw); } catch { }
+            }
+            history.push(stats);
+            localStorage.setItem('session_history', JSON.stringify(history));
           } catch { }
 
           // Navigate immediately to results page for a smooth UX
